@@ -14,7 +14,7 @@ services:
   backend:
     image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
     ports:
-      - 9000:9000
+      - 4000:9000   # changed from 9000:9000 to avoid conflict with MinIO
     depends_on:
       - minio
       - minio-mc
@@ -52,8 +52,8 @@ services:
   minio:
     image: quay.io/minio/minio
     ports:
-      - 9000:9000
-      - 9001:9001
+      - 9000:9000   # S3 endpoint
+      - 9001:9001   # MinIO console
     volumes:
       - minio_data:/data
     environment:
@@ -83,7 +83,6 @@ services:
     environment:
       PORT: 8000
       IMAGOR_SECRET: mysecret # secret key for URL signature
-      # IMAGOR_UNSAFE: 1 # unsafe URL for testing
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: 12341234
       AWS_ENDPOINT: http://minio:9000
