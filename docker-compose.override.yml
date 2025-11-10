@@ -5,7 +5,7 @@ services:
     build:
       target: development
     environment:
-      - NODE_ENV="development"
+      - NODE_ENV=development
       # - DEBUG=true
       - NUXT_BUILD=/tmp/nuxt # avoid file permission issues when `rm -rf .nuxt/`
     volumes:
@@ -22,15 +22,15 @@ services:
     build:
       target: development
     environment:
-      - NODE_ENV="development"
+      - NODE_ENV=development
       - SMTP_PORT=1025
       - SMTP_HOST=mailserver
       - AWS_ACCESS_KEY_ID=minio
       - AWS_SECRET_ACCESS_KEY=12341234
-      - AWS_ENDPOINT=http:/localhost:9000
+      - AWS_ENDPOINT=http://minio:9000
       - AWS_REGION=local
       - AWS_BUCKET=ocelot
-      - IMAGOR_PUBLIC_URL=http://localhost:8000
+      - IMAGOR_PUBLIC_URL=http://imagor:8000
       - IMAGOR_SECRET=mysecret
       - PROXY_S3=http://minio:9000
     volumes:
@@ -40,6 +40,7 @@ services:
     ports:
       # Also expose the neo4j query browser
       - 7474:7474
+      - 7687:7687
 
   mailserver:
     image: maildev/maildev
@@ -51,6 +52,7 @@ services:
   minio:
     image: quay.io/minio/minio
     ports:
+      - 9000:9000
       - 9001:9001
     volumes:
       - minio_data:/data
@@ -84,11 +86,11 @@ services:
       # IMAGOR_UNSAFE: 1 # unsafe URL for testing
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: 12341234
-      AWS_ENDPOINT: http:/minio:9000
+      AWS_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: 1
-      S3_LOADER_BUCKET: ocelot # enable S3 loader by specifying bucket
-      S3_STORAGE_BUCKET: ocelot # enable S3 storage by specifying bucket
-      S3_RESULT_STORAGE_BUCKET: ocelot # enable S3 result storage by specifying bucket
+      S3_LOADER_BUCKET: ocelot
+      S3_STORAGE_BUCKET: ocelot
+      S3_RESULT_STORAGE_BUCKET: ocelot
       HTTP_LOADER_BASE_URL: http://minio:9000
 
 volumes:
