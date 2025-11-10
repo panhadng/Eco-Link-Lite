@@ -1,5 +1,6 @@
-services:
+version: "3.8"
 
+services:
   webapp:
     image: ghcr.io/ocelot-social-community/ocelot-social/webapp:local-development
     build:
@@ -10,16 +11,10 @@ services:
     volumes:
       - ./webapp:/app
     ports:
-      - 3000:3000   # frontend on port 3000
+      - "3000:3000"
 
   backend:
     image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
-    ports:
-      - 4001:9000   # ✅ backend runs on 4001 externally, internal 9000
-    depends_on:
-      - minio
-      - minio-mc
-      - imagor
     build:
       target: development
     environment:
@@ -28,69 +23,67 @@ services:
       - SMTP_HOST=mailserver
       - AWS_ACCESS_KEY_ID=minio
       - AWS_SECRET_ACCESS_KEY=12341234
-      - AWS_ENDPOINT=http://minio:9000
+      - AWS_ENDPOINT=http://13.203.0.20:9000
       - AWS_REGION=local
       - AWS_BUCKET=ocelot
-      - IMAGOR_PUBLIC_URL=http://imagor:8000
+      - IMAGOR_PUBLIC_URL=http://13.203.0.20:8000
       - IMAGOR_SECRET=mysecret
-      - PROXY_S3=http://minio:9000
+      - PROXY_S3=http://13.203.0.20:9000
     volumes:
       - ./backend:/app
+    ports:
+      - "4000:4000"
+      - "4001:9000" # mapped to avoid internal conflicts
+    depends_on:
+      - neo4j
+      - minio
+      - imagor
+      - mailserver
 
   neo4j:
+    image: neo4j:4.4-community
     ports:
-      - 7474:7474   # Neo4j Browser
-      - 7687:7687   # Neo4j Bolt protocol
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/letmein
+    volumes:
+      - ./neo4j_data:/data
 
   mailserver:
     image: maildev/maildev
     container_name: mailserver
     ports:
-      - 1080:1080   # Mail UI
-      - 1025:1025   # SMTP
+      - "1080:1080"
+      - "1025:1025"
 
   minio:
     image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
     ports:
-      - 9000:9000   # MinIO API
-      - 9001:9001   # MinIO Console
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     environment:
       - MINIO_ROOT_USER=minio
       - MINIO_ROOT_PASSWORD=12341234
-    command: server /data --console-address ":9001"
-
-  minio-mc:
-    image: quay.io/minio/mc
-    depends_on:
-      - minio
-    restart: on-failure
-    volumes:
-      - ./minio/readonly-policy.json:/tmp/readonly-policy.json
-    entrypoint: >
-      /bin/sh -c "
-      sleep 5;
-      /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
-      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
-      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
-      "
 
   imagor:
     image: shumc/imagor:latest
     ports:
-      - 8000:8000   # Imagor image proxy
+      - "8000:8000"
     environment:
       PORT: 8000
       IMAGOR_SECRET: mysecret
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: 12341234
-      AWS_ENDPOINT: http://minio:9000
+      AWS_ENDPOINT: http://13.203.0.20:9000
       S3_FORCE_PATH_STYLE: 1
       S3_LOADER_BUCKET: ocelot
       S3_STORAGE_BUCKET: ocelot
       S3_RESULT_STORAGE_BUCKET: ocelot
-      HTTP_LOADER_BASE_URL: http://minio:9000
+      HTTP_LOADER_BASE_URL: http://13.203.0.20:9000
 
 volumes:
   minio_data:
