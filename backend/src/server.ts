@@ -53,7 +53,14 @@ const createServer = (options?: ApolloServerExpressConfig) => {
   app.use(bodyParser.json({ limit: '10mb' }) as any)
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }) as any)
   app.use(graphqlUploadExpress())
-  server.applyMiddleware({ app, path: '/' })
+  server.applyMiddleware({ 
+    app, 
+    path: '/',
+    cors: {
+      origin: [CONFIG.CLIENT_URI, 'http://localhost:3000', 'http://localhost:3001'],
+      credentials: true,
+    },
+  })
   const httpServer = http.createServer(app)
   server.installSubscriptionHandlers(httpServer)
 

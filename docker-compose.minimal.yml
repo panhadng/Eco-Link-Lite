@@ -1,0 +1,72 @@
+# Minimal setup - Only essential services for development
+# Usage: docker compose -f docker-compose.minimal.yml up -d
+
+services:
+  webapp:
+    image: ghcr.io/ocelot-social-community/ocelot-social/webapp:local-development
+    build:
+      context: .
+      dockerfile: ./webapp/Dockerfile
+      target: development
+    depends_on:
+      - backend
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV="development"
+      - HOST=0.0.0.0
+      - GRAPHQL_URI=http://backend:4000
+      - NUXT_BUILD=/tmp/nuxt
+    env_file:
+      - ./webapp/.env
+    volumes:
+      - ./webapp:/app
+
+  backend:
+    image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
+    build:
+      context: ./backend
+      target: development
+    depends_on:
+      - neo4j
+      - mailserver
+    ports:
+      - 4000:4000
+    environment:
+      - NODE_ENV="development"
+      - NEO4J_URI=bolt://neo4j:7687
+      - GRAPHQL_URI=http://backend:4000
+      - CLIENT_URI=http://webapp:3000
+      - SMTP_PORT=1025
+      - SMTP_HOST=mailserver
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+
+  neo4j:
+    image: ghcr.io/ocelot-social-community/ocelot-social/neo4j:community
+    build:
+      context: ./neo4j
+      target: community
+    ports:
+      - 7474:7474  # Browser UI
+      - 7687:7687  # Bolt protocol
+    volumes:
+      - neo4j_data:/data
+    environment:
+      - NEO4J_AUTH=none
+      - NEO4J_dbms_security_procedures_unrestricted=algo.*,apoc.*
+      - NEO4J_dbms_allow__format__migration=true
+      - NEO4J_dbms_allow__upgrade=true
+
+  mailserver:
+    image: maildev/maildev
+    container_name: mailserver
+    ports:
+      - 1080:1080  # Web UI to view emails
+      - 1025:1025  # SMTP port
+
+volumes:
+  neo4j_data:
+

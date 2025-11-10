@@ -114,10 +114,7 @@ export default {
    */
   plugins: [
     { src: '~/plugins/base-components.js', ssr: true },
-    {
-      src: `~/plugins/styleguide.js`,
-      ssr: true,
-    },
+    { src: '~/plugins/styleguide.js', ssr: true },
     { src: '~/plugins/i18n.js', ssr: true },
     { src: '~/plugins/axios.js', ssr: false },
     { src: '~/plugins/keep-alive.js', ssr: false },
