@@ -6,15 +6,16 @@ services:
       target: development
     environment:
       - NODE_ENV=development
-      # - DEBUG=true
-      - NUXT_BUILD=/tmp/nuxt # avoid file permission issues when `rm -rf .nuxt/`
+      - NUXT_BUILD=/tmp/nuxt
     volumes:
       - ./webapp:/app
+    ports:
+      - 3000:3000   # frontend on port 3000
 
   backend:
     image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
     ports:
-      - 4000:9000   # changed from 9000:9000 to avoid conflict with MinIO
+      - 4001:9000   # ✅ backend runs on 4001 externally, internal 9000
     depends_on:
       - minio
       - minio-mc
@@ -38,22 +39,21 @@ services:
 
   neo4j:
     ports:
-      # Also expose the neo4j query browser
-      - 7474:7474
-      - 7687:7687
+      - 7474:7474   # Neo4j Browser
+      - 7687:7687   # Neo4j Bolt protocol
 
   mailserver:
     image: maildev/maildev
     container_name: mailserver
     ports:
-      - 1080:1080
-      - 1025:1025
+      - 1080:1080   # Mail UI
+      - 1025:1025   # SMTP
 
   minio:
     image: quay.io/minio/minio
     ports:
-      - 9000:9000   # S3 endpoint
-      - 9001:9001   # MinIO console
+      - 9000:9000   # MinIO API
+      - 9001:9001   # MinIO Console
     volumes:
       - minio_data:/data
     environment:
@@ -79,10 +79,10 @@ services:
   imagor:
     image: shumc/imagor:latest
     ports:
-      - 8000:8000
+      - 8000:8000   # Imagor image proxy
     environment:
       PORT: 8000
-      IMAGOR_SECRET: mysecret # secret key for URL signature
+      IMAGOR_SECRET: mysecret
       AWS_ACCESS_KEY_ID: minio
       AWS_SECRET_ACCESS_KEY: 12341234
       AWS_ENDPOINT: http://minio:9000
