@@ -45,6 +45,7 @@ const config: S3Config = {
   AWS_REGION: 'AWS_REGION',
   IMAGOR_SECRET: 'IMAGOR_SECRET',
   IMAGOR_PUBLIC_URL: 'IMAGOR_PUBLIC_URL',
+  PROXY_S3: 'http://localhost:9000',
 }
 
 let authenticatedUser

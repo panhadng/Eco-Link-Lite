@@ -5,6 +5,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PROXY_S3: http://minio:9000
+        NODE_ENV: production
     container_name: eco-backend
     depends_on:
       neo4j:
