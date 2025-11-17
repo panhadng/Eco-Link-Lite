@@ -28,3 +28,12 @@ deployment/configurations/
 
 release/
 *~
+
+# Database files - should never be committed
+neo4j_data/
+*.db
+*.db-shm
+*.db-wal
+
+# Docker volumes and data
+minio_data/

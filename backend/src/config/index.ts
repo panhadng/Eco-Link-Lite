@@ -165,6 +165,7 @@ export type S3Config = Pick<
   | 'AWS_BUCKET'
   | 'IMAGOR_SECRET'
   | 'IMAGOR_PUBLIC_URL'
+  | 'PROXY_S3'
 >
 export default CONFIG
 

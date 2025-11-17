@@ -286,8 +286,20 @@ export default {
           `,
           { postId: args.id },
         )
+
+        if (!deletePostTransactionResponse.records.length) {
+          throw new UserInputError('Post not found.')
+        }
+
         const [post] = deletePostTransactionResponse.records.map((record) => record.get('post'))
-        await images(context.config).deleteImage(post, 'HERO_IMAGE', { transaction })
+        if (!post) {
+          throw new UserInputError('Post not found.')
+        }
+        try {
+          await images(context.config).deleteImage(post, 'HERO_IMAGE', { transaction })
+        } catch (error) {
+          // Ignore storage errors so that the post delete succeeds even if image removal fails
+        }
         return post
       })
       try {

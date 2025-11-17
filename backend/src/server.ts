@@ -16,6 +16,7 @@ import CONFIG from './config'
 import { context, getContext } from './context'
 import schema from './graphql/schema'
 import middleware from './middleware'
+import { metricsMiddleware, metricsHandler, metricsJsonHandler } from './middleware/metrics'
 
 import type { ApolloServerExpressConfig } from 'apollo-server-express'
 
@@ -52,6 +53,14 @@ const createServer = (options?: ApolloServerExpressConfig) => {
   app.use(express.static('public'))
   app.use(bodyParser.json({ limit: '10mb' }) as any)
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }) as any)
+  
+  // Metrics middleware - track all requests
+  app.use(metricsMiddleware)
+  
+  // Metrics endpoints - must be defined BEFORE Apollo Server middleware
+  app.get('/metrics', metricsHandler)
+  app.get('/metrics/json', metricsJsonHandler)
+  
   app.use(graphqlUploadExpress())
   server.applyMiddleware({ 
     app, 

@@ -8,7 +8,7 @@ import { FileUploadCallback, FileDeleteCallback } from './types'
 export const s3Service = (config: S3Config, prefix: string) => {
   const { AWS_BUCKET: Bucket } = config
 
-  const { AWS_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = config
+  const { AWS_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PROXY_S3 } = config
   const s3 = new S3Client({
     credentials: {
       accessKeyId: AWS_ACCESS_KEY_ID,
@@ -38,6 +38,23 @@ export const s3Service = (config: S3Config, prefix: string) => {
     if (!location.startsWith('https://') && !location.startsWith('http://')) {
       // Ensure the location has a protocol. Hetzner sometimes does not return a protocol in the location.
       location = `https://${location}`
+    }
+
+    if (PROXY_S3) {
+      try {
+        const targetUrl = new URL(PROXY_S3)
+        const publicUrl = new URL(location)
+        const needsHostRewrite =
+          targetUrl.hostname === 'minio' || (!targetUrl.hostname.includes('.') && targetUrl.hostname !== 'localhost')
+        publicUrl.hostname = needsHostRewrite ? 'localhost' : targetUrl.hostname
+        if (targetUrl.port) {
+          publicUrl.port = targetUrl.port
+        }
+        publicUrl.protocol = targetUrl.protocol
+        location = publicUrl.toString()
+      } catch (error) {
+        // If rewriting fails, fall back to the original location
+      }
     }
 
     return location
