@@ -37,3 +37,6 @@ neo4j_data/
 
 # Docker volumes and data
 minio_data/
+
+# Client folder - separate repository
+client/
