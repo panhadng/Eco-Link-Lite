@@ -31,14 +31,16 @@ services:
       - AWS_SECRET_ACCESS_KEY=12341234
       - AWS_ENDPOINT=http://minio:9000
       - AWS_REGION=local
-      - AWS_BUCKET=ocelot
+      - AWS_BUCKET=ecolink
       - IMAGOR_PUBLIC_URL=http://13.203.0.20:8000
       - IMAGOR_SECRET=mysecret
       # PROXY_S3 is only for local dev - in production, set to public IP for URL rewriting
       # This makes image URLs use the server IP instead of localhost or internal service names
+      # IMPORTANT: Make sure backend/.env does NOT override this with localhost
       - PROXY_S3=http://13.203.0.20:9000
     env_file:
       - ./backend/.env
+    # Note: env_file values override environment values, so ensure backend/.env has PROXY_S3=http://13.203.0.20:9000
 
   maintenance:
     image: ghcr.io/ocelot-social-community/ocelot-social/maintenance:${OCELOT_VERSION:-latest}
@@ -113,9 +115,10 @@ services:
       /bin/sh -c "
       sleep 5;
       /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
-      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
-      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
-      /usr/bin/mc cors set public dockerminio/ocelot;
+      /usr/bin/mc mb --ignore-existing dockerminio/ecolink;
+      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ecolink;
+      /usr/bin/mc cors set download dockerminio/ecolink;
+      /usr/bin/mc cors set public dockerminio/ecolink;
       "
 
   imagor:
@@ -130,9 +133,9 @@ services:
       AWS_SECRET_ACCESS_KEY: 12341234
       AWS_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: 1
-      S3_LOADER_BUCKET: ocelot
-      S3_STORAGE_BUCKET: ocelot
-      S3_RESULT_STORAGE_BUCKET: ocelot
+      S3_LOADER_BUCKET: ecolink
+      S3_STORAGE_BUCKET: ecolink
+      S3_RESULT_STORAGE_BUCKET: ecolink
       HTTP_LOADER_BASE_URL: http://minio:9000
 
 volumes:
