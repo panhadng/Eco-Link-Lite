@@ -11,6 +11,10 @@ services:
       target: production
     depends_on:
       - neo4j
+      - mailserver
+      - minio
+      - minio-mc
+      - imagor
     ports:
       - 4000:4000
     environment:
@@ -21,7 +25,18 @@ services:
       # Application only envs
       - NEO4J_URI=bolt://neo4j:7687
       - GRAPHQL_URI=http://backend:4000
-      - CLIENT_URI=http://webapp:3000
+      - SMTP_PORT=1025
+      - SMTP_HOST=mailserver
+      - AWS_ACCESS_KEY_ID=minio
+      - AWS_SECRET_ACCESS_KEY=12341234
+      - AWS_ENDPOINT=http://minio:9000
+      - AWS_REGION=local
+      - AWS_BUCKET=ocelot
+      - IMAGOR_PUBLIC_URL=http://13.203.0.20:8000
+      - IMAGOR_SECRET=mysecret
+      # PROXY_S3 is only for local dev - in production, set to public IP for URL rewriting
+      # This makes image URLs use the server IP instead of localhost or internal service names
+      - PROXY_S3=http://13.203.0.20:9000
     env_file:
       - ./backend/.env
 
@@ -60,5 +75,66 @@ services:
     # bring the database in offline mode to export or load dumps
     # command: ["tail", "-f", "/dev/null"]
 
+  mailserver:
+    image: maildev/maildev
+    container_name: eco-mailserver
+    ports:
+      - 1080:1080  # Web UI to view emails
+      - 1025:1025  # SMTP port
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: eco-minio
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=12341234
+    command: server /data --console-address ":9001" --address ":9000"
+    # Configure CORS for public access
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  minio-mc:
+    image: quay.io/minio/mc
+    container_name: eco-minio-mc
+    depends_on:
+      - minio
+    restart: on-failure
+    volumes:
+      - ./minio/readonly-policy.json:/tmp/readonly-policy.json
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
+      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
+      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
+      /usr/bin/mc cors set public dockerminio/ocelot;
+      "
+
+  imagor:
+    image: shumc/imagor:latest
+    container_name: eco-imagor
+    ports:
+      - 8000:8000
+    environment:
+      PORT: 8000
+      IMAGOR_SECRET: mysecret
+      AWS_ACCESS_KEY_ID: minio
+      AWS_SECRET_ACCESS_KEY: 12341234
+      AWS_ENDPOINT: http://minio:9000
+      S3_FORCE_PATH_STYLE: 1
+      S3_LOADER_BUCKET: ocelot
+      S3_STORAGE_BUCKET: ocelot
+      S3_RESULT_STORAGE_BUCKET: ocelot
+      HTTP_LOADER_BASE_URL: http://minio:9000
+
 volumes:
   neo4j_data:
+  minio_data:
