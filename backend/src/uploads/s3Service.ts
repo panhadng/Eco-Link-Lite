@@ -40,7 +40,31 @@ export const s3Service = (config: S3Config, prefix: string) => {
       location = `https://${location}`
     }
 
-    if (PROXY_S3) {
+    // Prioritize PUBLIC_MEDIA_URL over PROXY_S3
+    if (PUBLIC_MEDIA_URL) {
+      // Use PUBLIC_MEDIA_URL to construct the public URL
+      try {
+        const s3Url = new URL(location)
+        // Extract bucket, path, and file from the S3 location
+        // Format: http://localhost:9000/bucket/path/file
+        const pathParts = s3Url.pathname.split('/').filter(Boolean)
+        const bucket = pathParts[0] || Bucket
+        const path = pathParts.slice(1, -1).join('/')
+        const file = pathParts[pathParts.length - 1]
+        
+        // Construct URL using PUBLIC_MEDIA_URL
+        // Remove trailing slash from PUBLIC_MEDIA_URL if present
+        const baseUrl = PUBLIC_MEDIA_URL.endsWith('/') 
+          ? PUBLIC_MEDIA_URL.slice(0, -1) 
+          : PUBLIC_MEDIA_URL
+        const publicPath = [bucket, path, file].filter(Boolean).join('/')
+        location = `${baseUrl}/${publicPath}`
+        console.log(`[s3Service] Rewrote URL using PUBLIC_MEDIA_URL: ${location}`)
+      } catch (error) {
+        // If rewriting fails, fall back to the original location
+        console.error('Error constructing PUBLIC_MEDIA_URL:', error, 'Original location:', location)
+      }
+    } else if (PROXY_S3) {
       try {
         const targetUrl = new URL(PROXY_S3)
         const publicUrl = new URL(location)
@@ -52,23 +76,6 @@ export const s3Service = (config: S3Config, prefix: string) => {
         }
         publicUrl.protocol = targetUrl.protocol
         location = publicUrl.toString()
-      } catch (error) {
-        // If rewriting fails, fall back to the original location
-      }
-    } else if (PUBLIC_MEDIA_URL) {
-      // Use PUBLIC_MEDIA_URL to construct the public URL
-      try {
-        const publicMediaUrl = new URL(PUBLIC_MEDIA_URL)
-        const s3Url = new URL(location)
-        // Extract bucket, path, and file from the S3 location
-        const pathParts = s3Url.pathname.split('/').filter(Boolean)
-        const bucket = pathParts[0] || Bucket
-        const path = pathParts.slice(1, -1).join('/')
-        const file = pathParts[pathParts.length - 1]
-        
-        // Construct URL using PUBLIC_MEDIA_URL
-        const publicPath = [bucket, path, file].filter(Boolean).join('/')
-        location = `${PUBLIC_MEDIA_URL}/${publicPath}`
       } catch (error) {
         // If rewriting fails, fall back to the original location
       }
