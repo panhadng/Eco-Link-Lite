@@ -66,7 +66,7 @@ const createServer = (options?: ApolloServerExpressConfig) => {
     app, 
     path: '/',
     cors: {
-      origin: [CONFIG.CLIENT_URI, 'http://localhost:3000', 'http://localhost:3001', 'http://13.203.0.20', 'http://13.203.0.20:3000', 'http://13.203.0.20:3001'],
+      origin: [CONFIG.CLIENT_URI, 'http://localhost:3000', 'http://localhost:3001', 'http://13.203.0.20', 'http://13.203.0.20:3000', 'http://13.203.0.20:3001' ,'https://eco-link.flyonit.com.au'],
       credentials: true,
     },
   })
