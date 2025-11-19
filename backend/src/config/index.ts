@@ -103,6 +103,7 @@ const required = {
 
   IMAGOR_PUBLIC_URL: env.IMAGOR_PUBLIC_URL,
   IMAGOR_SECRET: env.IMAGOR_SECRET,
+  PUBLIC_MEDIA_URL: env.PUBLIC_MEDIA_URL,
 
   MAPBOX_TOKEN: env.MAPBOX_TOKEN,
   JWT_SECRET: env.JWT_SECRET,
@@ -166,6 +167,7 @@ export type S3Config = Pick<
   | 'IMAGOR_SECRET'
   | 'IMAGOR_PUBLIC_URL'
   | 'PROXY_S3'
+  | 'PUBLIC_MEDIA_URL'
 >
 export default CONFIG
 

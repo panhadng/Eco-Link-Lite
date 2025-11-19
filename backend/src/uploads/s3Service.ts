@@ -8,7 +8,7 @@ import { FileUploadCallback, FileDeleteCallback } from './types'
 export const s3Service = (config: S3Config, prefix: string) => {
   const { AWS_BUCKET: Bucket } = config
 
-  const { AWS_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PROXY_S3 } = config
+  const { AWS_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, PROXY_S3, PUBLIC_MEDIA_URL } = config
   const s3 = new S3Client({
     credentials: {
       accessKeyId: AWS_ACCESS_KEY_ID,
@@ -52,6 +52,23 @@ export const s3Service = (config: S3Config, prefix: string) => {
         }
         publicUrl.protocol = targetUrl.protocol
         location = publicUrl.toString()
+      } catch (error) {
+        // If rewriting fails, fall back to the original location
+      }
+    } else if (PUBLIC_MEDIA_URL) {
+      // Use PUBLIC_MEDIA_URL to construct the public URL
+      try {
+        const publicMediaUrl = new URL(PUBLIC_MEDIA_URL)
+        const s3Url = new URL(location)
+        // Extract bucket, path, and file from the S3 location
+        const pathParts = s3Url.pathname.split('/').filter(Boolean)
+        const bucket = pathParts[0] || Bucket
+        const path = pathParts.slice(1, -1).join('/')
+        const file = pathParts[pathParts.length - 1]
+        
+        // Construct URL using PUBLIC_MEDIA_URL
+        const publicPath = [bucket, path, file].filter(Boolean).join('/')
+        location = `${PUBLIC_MEDIA_URL}/${publicPath}`
       } catch (error) {
         // If rewriting fails, fall back to the original location
       }
