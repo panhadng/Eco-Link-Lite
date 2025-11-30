@@ -51,8 +51,8 @@ const createServer = (options?: ApolloServerExpressConfig) => {
     ) as any,
   )
   app.use(express.static('public'))
-  app.use(bodyParser.json({ limit: '10mb' }) as any)
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }) as any)
+  app.use(bodyParser.json({ limit: '20mb' }) as any)
+  app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }) as any)
   
   // Metrics middleware - track all requests
   app.use(metricsMiddleware)
@@ -61,7 +61,7 @@ const createServer = (options?: ApolloServerExpressConfig) => {
   app.get('/metrics', metricsHandler)
   app.get('/metrics/json', metricsJsonHandler)
   
-  app.use(graphqlUploadExpress())
+  app.use(graphqlUploadExpress({ maxFileSize: 20 * 1024 * 1024 })) // 20MB max file size
   server.applyMiddleware({ 
     app, 
     path: '/',
