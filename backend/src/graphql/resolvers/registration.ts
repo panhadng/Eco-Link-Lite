@@ -36,6 +36,89 @@ export default {
         throw new UserInputError(e.message)
       }
     },
+    SimpleSignup: async (_parent, args, context: Context) => {
+      const { termsAndConditionsAgreedVersion } = args
+      const regEx = /^[0-9]+\.[0-9]+\.[0-9]+$/g
+      if (!regEx.test(termsAndConditionsAgreedVersion)) {
+        throw new UserInputError('Invalid version format!')
+      }
+      args.termsAndConditionsAgreedAt = new Date().toISOString()
+
+      let { email, locationName } = args
+      email = normalizeEmail(email)
+      
+      // Check if email already exists
+      const existingEmail = await existingEmailAddress({ args: { email }, context })
+      if (existingEmail.alreadyExistingEmail && existingEmail.user) {
+        throw new UserInputError('A user account with this email already exists.')
+      }
+
+      // Hash password
+      args.encryptedPassword = await hash(args.password, 10)
+      delete args.password
+      delete args.email
+      delete args.locationName
+
+      if (locationName === '') locationName = null
+
+      const { driver } = context
+      const session = driver.session()
+      const writeTxResultPromise = session.writeTransaction(async (transaction) => {
+        // Create EmailAddress and User in one transaction
+        const createUserTransactionResponse = await transaction.run(
+          `
+            MERGE (email:EmailAddress {email: $email})
+            ON CREATE SET email.createdAt = toString(datetime())
+            WITH email
+            WHERE NOT (email)-[:BELONGS_TO]->()
+            CREATE (user:User)
+            MERGE (user)-[:PRIMARY_EMAIL]->(email)
+            MERGE (user)<-[:BELONGS_TO]-(email)
+            SET user += $args
+            SET user.id = randomUUID()
+            SET user.role = 'user'
+            SET user.createdAt = toString(datetime())
+            SET user.updatedAt = toString(datetime())
+            SET user.allowEmbedIframes = false
+            SET user.showShoutsPublicly = false
+            SET user.locationName = $locationName
+            SET email.verifiedAt = toString(datetime())
+            WITH user, email
+            OPTIONAL MATCH (post:Post)-[:IN]->(group:Group)
+              WHERE NOT group.groupType = 'public'
+            WITH user, email, collect(post) AS invisiblePosts
+            FOREACH (invisiblePost IN invisiblePosts |
+              MERGE (user)-[:CANNOT_SEE]->(invisiblePost)
+            )
+            RETURN user {.*, email: email.email}
+          `,
+          {
+            args,
+            email,
+            locationName,
+          },
+        )
+        const [user] = createUserTransactionResponse.records.map((record) => record.get('user'))
+        if (!user) throw new UserInputError('Email already exists or user creation failed')
+
+        return user
+      })
+      try {
+        const user = await writeTxResultPromise
+
+        // To allow redeeming and return an User object we require a User in the context
+        context.user = user
+
+        await createOrUpdateLocations('User', user.id, locationName, session, context)
+        return user
+      } catch (e) {
+        if (e.code === 'Neo.ClientError.Schema.ConstraintValidationFailed')
+          throw new UserInputError('User with this slug already exists!')
+        throw new UserInputError(e.message)
+      } finally {
+        await session.close()
+      }
+    },
     SignupVerification: async (_parent, args, context: Context) => {
       const { termsAndConditionsAgreedVersion } = args
       const regEx = /^[0-9]+\.[0-9]+\.[0-9]+$/g

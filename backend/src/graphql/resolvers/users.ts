@@ -159,8 +159,9 @@ export default {
       }
     },
     UpdateUser: async (_parent, params, context: Context, _resolveInfo) => {
-      const { avatar: avatarInput } = params
+      const { avatar: avatarInput, coverImage: coverImageInput } = params
       delete params.avatar
+      delete params.coverImage
       params.locationName = params.locationName === '' ? null : params.locationName
       const { termsAndConditionsAgreedVersion } = params
       if (termsAndConditionsAgreedVersion) {
@@ -198,6 +199,11 @@ export default {
         const [user] = updateUserTransactionResponse.records.map((record) => record.get('user'))
         if (avatarInput) {
           await images(context.config).mergeImage(user, 'AVATAR_IMAGE', avatarInput, {
+            transaction,
+          })
+        }
+        if (coverImageInput !== undefined) {
+          await images(context.config).mergeImage(user, 'COVER_IMAGE', coverImageInput, {
             transaction,
           })
         }
@@ -659,6 +665,7 @@ export default {
       },
       hasOne: {
         avatar: '-[:AVATAR_IMAGE]->(related:Image)',
+        coverImage: '-[:COVER_IMAGE]->(related:Image)',
         invitedBy: '<-[:INVITED]-(related:User)',
         location: '-[:IS_IN]->(related:Location)',
         redeemedInviteCode: '-[:REDEEMED]->(related:InviteCode)',

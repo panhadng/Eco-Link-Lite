@@ -26,6 +26,15 @@ type Mutation {
     locale: String
     locationName: String = null
   ): User
+  SimpleSignup(
+    email: String!
+    name: String!
+    password: String!
+    slug: String
+    termsAndConditionsAgreedVersion: String!
+    locale: String
+    locationName: String = null
+  ): User
   AddEmailAddress(email: String!): EmailAddress
   VerifyEmailAddress(
     nonce: String!

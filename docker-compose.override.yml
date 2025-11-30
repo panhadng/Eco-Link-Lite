@@ -21,8 +21,18 @@ services:
       target: development
     environment:
       - NODE_ENV="development"
+      # MailDev Configuration (for local development - no authentication needed)
       - SMTP_PORT=1025
       - SMTP_HOST=mailserver
+      - SMTP_IGNORE_TLS=true
+      - EMAIL_DEFAULT_SENDER=BrianDuong7777@gmail.com
+      # For production with Gmail, use these settings instead:
+      # - SMTP_HOST=smtp.gmail.com
+      # - SMTP_PORT=587
+      # - SMTP_SECURE=false
+      # - SMTP_IGNORE_TLS=false
+      # - SMTP_USERNAME=BrianDuong7777@gmail.com
+      # - SMTP_PASSWORD=${GMAIL_APP_PASSWORD}
       - AWS_ACCESS_KEY_ID=minio
       - AWS_SECRET_ACCESS_KEY=12341234
       - AWS_ENDPOINT=http://minio:9000

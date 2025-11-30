@@ -36,13 +36,13 @@ export interface Image {
 export interface Images {
   deleteImage: (
     resource: { id: string },
-    relationshipType: 'HERO_IMAGE' | 'AVATAR_IMAGE',
+    relationshipType: 'HERO_IMAGE' | 'AVATAR_IMAGE' | 'COVER_IMAGE',
     opts?: DeleteImageOpts,
   ) => Promise<Image>
 
   mergeImage: (
     resource: { id: string },
-    relationshipType: 'HERO_IMAGE' | 'AVATAR_IMAGE',
+    relationshipType: 'HERO_IMAGE' | 'AVATAR_IMAGE' | 'COVER_IMAGE',
     imageInput: ImageInput | null | undefined,
     opts?: MergeImageOpts,
   ) => Promise<Image | undefined>

@@ -46,6 +46,7 @@ export default {
   Mutation: {
     AddEmailAddress: sendEmailVerificationMail,
     requestPasswordReset: sendPasswordResetMail,
-    Signup: sendSignupMail,
+    // Email verification temporarily disabled - using SimpleSignup instead
+    // Signup: sendSignupMail,
   },
 }

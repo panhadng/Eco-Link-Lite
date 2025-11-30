@@ -585,7 +585,7 @@ export default {
       },
       count: {
         commentsCount:
-          '<-[:COMMENTS]-(related:Comment) WHERE NOT related.deleted = true AND NOT related.disabled = true',
+          '<-[:COMMENTS]-(related:Comment)<-[:WROTE]-(author:User) WHERE NOT related.deleted = true AND NOT related.disabled = true AND NOT author.deleted = true AND NOT author.disabled = true',
         shoutedCount:
           '<-[:SHOUTED]-(related:User) WHERE NOT related.deleted = true AND NOT related.disabled = true',
         emotionsCount: '<-[related:EMOTED]-(:User)',

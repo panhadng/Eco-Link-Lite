@@ -35,6 +35,7 @@ export default {
     Post: setDefaultFilters,
     Comment: setDefaultFilters,
     User: setDefaultFilters,
+    Group: setDefaultFilters,
     profilePagePosts: setDefaultFilters,
   },
   Mutation: async (resolve, root, args, context, info) => {
@@ -48,4 +49,5 @@ export default {
   Post: obfuscate,
   User: obfuscate,
   Comment: obfuscate,
+  Group: obfuscate,
 }

@@ -37,6 +37,16 @@ export default {
       args.slug = args.slug || (await uniqueSlug(args.name, isUniqueFor(context, 'User')))
       return resolve(root, args, context, info)
     },
+    SimpleSignup: async (
+      resolve,
+      root,
+      args: { slug: string; name: string },
+      context: Context,
+      info,
+    ) => {
+      args.slug = args.slug || (await uniqueSlug(args.name, isUniqueFor(context, 'User')))
+      return resolve(root, args, context, info)
+    },
     CreateGroup: async (
       resolve,
       root,

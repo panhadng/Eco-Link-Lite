@@ -23,7 +23,7 @@ import { createOrUpdateLocations } from './users/location'
 export default {
   Query: {
     Group: async (_object, params, context: Context, _resolveInfo) => {
-      const { isMember, id, slug, first, offset } = params
+      const { isMember, id, slug, first, offset, deleted } = params
       let pagination = ''
       const orderBy = 'ORDER BY group.createdAt DESC'
       if (first !== undefined && offset !== undefined) pagination = `SKIP ${offset} LIMIT ${first}`
@@ -36,11 +36,15 @@ export default {
         }
         const groupMatchParamsCypher = convertObjectToCypherMapLiteral(matchParams, true)
         let groupCypher
+        // Filter out deleted groups unless explicitly requested (soft delete middleware sets deleted = false by default)
+        const deletedFilter = deleted === false || deleted === undefined ? 'AND NOT group.deleted' : ''
+        
         if (isMember === true) {
           groupCypher = `
             MATCH (:User {id: $userId})-[membership:MEMBER_OF]->(group:Group${groupMatchParamsCypher})
             WITH group, membership
-            WHERE (group.groupType IN ['public', 'closed']) OR (group.groupType = 'hidden' AND membership.role IN ['usual', 'admin', 'owner'])
+            WHERE ((group.groupType IN ['public', 'closed']) OR (group.groupType = 'hidden' AND membership.role IN ['usual', 'admin', 'owner']))
+              ${deletedFilter}
             RETURN group {.*, myRole: membership.role}
             ${orderBy}
             ${pagination}
@@ -50,8 +54,8 @@ export default {
             groupCypher = `
               MATCH (group:Group${groupMatchParamsCypher})
               WHERE (NOT (:User {id: $userId})-[:MEMBER_OF]->(group))
-              WITH group
-              WHERE group.groupType IN ['public', 'closed']
+                AND group.groupType IN ['public', 'closed']
+                ${deletedFilter}
               RETURN group {.*, myRole: NULL}
               ${orderBy}
               ${pagination}
@@ -61,7 +65,8 @@ export default {
               MATCH (group:Group${groupMatchParamsCypher})
               OPTIONAL MATCH (:User {id: $userId})-[membership:MEMBER_OF]->(group)
               WITH group, membership
-              WHERE (group.groupType IN ['public', 'closed']) OR (group.groupType = 'hidden' AND membership.role IN ['usual', 'admin', 'owner'])
+              WHERE ((group.groupType IN ['public', 'closed']) OR (group.groupType = 'hidden' AND membership.role IN ['usual', 'admin', 'owner']))
+                ${deletedFilter}
               RETURN group {.*, myRole: membership.role}
               ${orderBy}
               ${pagination}
@@ -448,6 +453,62 @@ export default {
           },
         )
         const [group] = transactionResponse.records.map((record) => record.get('group'))
+        return group
+      })
+      try {
+        return await writeTxResultPromise
+      } catch (error) {
+        throw new Error(error)
+      } finally {
+        await session.close()
+      }
+    },
+    DeleteGroup: async (_parent, params, context: Context, _resolveInfo) => {
+      if (!context.user) {
+        throw new Error('Missing authenticated user.')
+      }
+      const { id: groupId } = params
+      const userId = context.user.id
+      const session = context.driver.session()
+      const writeTxResultPromise = session.writeTransaction(async (transaction) => {
+        // Verify user is owner of the group
+        const checkOwnerResponse = await transaction.run(
+          `
+          MATCH (user:User {id: $userId})-[membership:MEMBER_OF]->(group:Group {id: $groupId})
+          RETURN membership.role AS role, group {.*}
+        `,
+          { userId, groupId },
+        )
+        const ownerRecord = checkOwnerResponse.records[0]
+        if (!ownerRecord) {
+          throw new Error('Group not found or you are not a member.')
+        }
+        const role = ownerRecord.get('role')
+        if (role !== 'owner') {
+          throw new Error('Only group owners can delete the group.')
+        }
+
+        // Soft delete all posts in the group
+        await transaction.run(
+          `
+          MATCH (post:Post)-[:IN]->(group:Group {id: $groupId})
+          SET post.deleted = true
+          SET post.updatedAt = toString(datetime())
+        `,
+          { groupId },
+        )
+
+        // Soft delete the group by setting deleted = true
+        const deleteResponse = await transaction.run(
+          `
+          MATCH (group:Group {id: $groupId})
+          SET group.deleted = true
+          SET group.updatedAt = toString(datetime())
+          RETURN group {.*}
+        `,
+          { groupId },
+        )
+        const [group] = deleteResponse.records.map((record) => record.get('group'))
         return group
       })
       try {
