@@ -9604,9 +9604,9 @@ pretty-ms@~7.0.1:
   dependencies:
     parse-ms "^2.1.0"
 
-preview-email@*, preview-email@^3.1.0:
+preview-email@^3.0.17, preview-email@^3.1.0:
   version "3.1.0"
-  resolved "https://registry.npmjs.org/preview-email/-/preview-email-3.1.0.tgz"
+  resolved "https://registry.yarnpkg.com/preview-email/-/preview-email-3.1.0.tgz#ee8525d878afef4309ae548116e4a4fe8b119a6d"
   integrity sha512-ZtV1YrwscEjlrUzYrTSs6Nwo49JM3pXLM4fFOBSC3wSni+bxaWlw9/Qgk75PZO8M7cX2EybmL2iwvaV3vkAttw==
   dependencies:
     ci-info "^3.8.0"

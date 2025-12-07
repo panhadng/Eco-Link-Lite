@@ -5,7 +5,7 @@
 
 services:
   backend:
-    image: ghcr.io/ocelot-social-community/ocelot-social/backend:${OCELOT_VERSION:-latest}
+    image: ghcr.io/ecolink-backend:${OCELOT_VERSION:-latest}
     build:
       context: ./backend
       target: production
@@ -43,7 +43,7 @@ services:
     # Note: env_file values override environment values, so ensure backend/.env has PROXY_S3=http://13.203.0.20:9000
 
   maintenance:
-    image: ghcr.io/ocelot-social-community/ocelot-social/maintenance:${OCELOT_VERSION:-latest}
+    image: ghcr.io/ecolink-maintenance:${OCELOT_VERSION:-latest}
     build:
       context: .
       dockerfile: ./webapp/Dockerfile.maintenance
@@ -51,7 +51,7 @@ services:
       - 3001:80
 
   neo4j:
-    image: ghcr.io/ocelot-social-community/ocelot-social/neo4j:community
+    image: ghcr.io/ecolink-neo4j:community
     build:
       context: ./neo4j
       # community edition 👆🏼, because we have no enterprise licence 👇🏼 at the moment

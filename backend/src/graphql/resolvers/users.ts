@@ -210,10 +210,24 @@ export default {
         return user
       })
       try {
-        const user = await writeTxResultPromise
+        await writeTxResultPromise
         // TODO: put in a middleware, see "CreateGroup", "UpdateGroup"
         await createOrUpdateLocations('User', params.id, params.locationName, session, context)
-        return user
+        
+        // Refetch user with relationships (avatar, coverImage) after image updates
+        const refetchResult = await session.readTransaction(async (transaction) => {
+          const result = await transaction.run(
+            `
+              MATCH (user:User {id: $id})
+              OPTIONAL MATCH (user)-[:AVATAR_IMAGE]->(avatar:Image)
+              OPTIONAL MATCH (user)-[:COVER_IMAGE]->(coverImage:Image)
+              RETURN user {.*, avatar: avatar {.*}, coverImage: coverImage {.*}}
+            `,
+            { id: params.id }
+          )
+          return result.records.map((record) => record.get('user'))[0]
+        })
+        return refetchResult
       } catch (error) {
         throw new UserInputError(error.message)
       } finally {

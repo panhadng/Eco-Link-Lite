@@ -1,18 +1,7 @@
 services:
 
-  webapp:
-    image: ghcr.io/ocelot-social-community/ocelot-social/webapp:local-development
-    build:
-      target: development
-    environment:
-      - NODE_ENV="development"
-      # - DEBUG=true
-      - NUXT_BUILD=/tmp/nuxt # avoid file permission issues when `rm -rf .nuxt/`
-    volumes:
-      - ./webapp:/app
-
   backend:
-    image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
+    image: ghcr.io/ecolink-backend:local-development
     depends_on:
       - minio
       - minio-mc
@@ -37,7 +26,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=12341234
       - AWS_ENDPOINT=http://minio:9000
       - AWS_REGION=local
-      - AWS_BUCKET=ocelot
+      - AWS_BUCKET=ecolink
       - IMAGOR_PUBLIC_URL=http://localhost:8000
       - IMAGOR_SECRET=mysecret
       - PROXY_S3=http://minio:9000
@@ -79,8 +68,8 @@ services:
       /bin/sh -c "
       sleep 5;
       /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
-      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
-      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
+      /usr/bin/mc mb --ignore-existing dockerminio/ecolink;
+      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ecolink;
       "
 
   imagor:
@@ -95,9 +84,9 @@ services:
       AWS_SECRET_ACCESS_KEY: 12341234
       AWS_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: 1
-      S3_LOADER_BUCKET: ocelot # enable S3 loader by specifying bucket
-      S3_STORAGE_BUCKET: ocelot # enable S3 storage by specifying bucket
-      S3_RESULT_STORAGE_BUCKET: ocelot # enable S3 result storage by specifying bucket
+      S3_LOADER_BUCKET: ecolink # enable S3 loader by specifying bucket
+      S3_STORAGE_BUCKET: ecolink # enable S3 storage by specifying bucket
+      S3_RESULT_STORAGE_BUCKET: ecolink # enable S3 result storage by specifying bucket
       HTTP_LOADER_BASE_URL: http://minio:9000
 
 volumes:

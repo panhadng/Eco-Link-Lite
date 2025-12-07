@@ -2,28 +2,8 @@
 # Usage: docker compose -f docker-compose.minimal.yml up -d
 
 services:
-  webapp:
-    image: ghcr.io/ocelot-social-community/ocelot-social/webapp:local-development
-    build:
-      context: .
-      dockerfile: ./webapp/Dockerfile
-      target: development
-    depends_on:
-      - backend
-    ports:
-      - 3000:3000
-    environment:
-      - NODE_ENV="development"
-      - HOST=0.0.0.0
-      - GRAPHQL_URI=http://backend:4000
-      - NUXT_BUILD=/tmp/nuxt
-    env_file:
-      - ./webapp/.env
-    volumes:
-      - ./webapp:/app
-
   backend:
-    image: ghcr.io/ocelot-social-community/ocelot-social/backend:local-development
+    image: ghcr.io/ecolink-backend:local-development
     build:
       context: ./backend
       target: development
@@ -46,7 +26,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=12341234
       - AWS_ENDPOINT=http://minio:9000
       - AWS_REGION=local
-      - AWS_BUCKET=ocelot
+      - AWS_BUCKET=ecolink
       - IMAGOR_PUBLIC_URL=http://imagor:8000
       - IMAGOR_SECRET=mysecret
       - PROXY_S3=http://minio:9000
@@ -56,7 +36,7 @@ services:
       - ./backend:/app
 
   neo4j:
-    image: ghcr.io/ocelot-social-community/ocelot-social/neo4j:community
+    image: ghcr.io/ecolink-neo4j:community
     build:
       context: ./neo4j
       target: community
@@ -101,8 +81,8 @@ services:
       /bin/sh -c "
       sleep 5;
       /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
-      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
-      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
+      /usr/bin/mc mb --ignore-existing dockerminio/ecolink;
+      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ecolink;
       "
 
   imagor:
@@ -116,9 +96,9 @@ services:
       AWS_SECRET_ACCESS_KEY: 12341234
       AWS_ENDPOINT: http://minio:9000
       S3_FORCE_PATH_STYLE: 1
-      S3_LOADER_BUCKET: ocelot
-      S3_STORAGE_BUCKET: ocelot
-      S3_RESULT_STORAGE_BUCKET: ocelot
+      S3_LOADER_BUCKET: ecolink
+      S3_STORAGE_BUCKET: ecolink
+      S3_RESULT_STORAGE_BUCKET: ecolink
       HTTP_LOADER_BASE_URL: http://minio:9000
 
 volumes:

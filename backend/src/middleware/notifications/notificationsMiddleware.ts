@@ -445,49 +445,54 @@ const handleCreateMessage = async (resolve, root, args, context, resolveInfo) =>
     user: { id: currentUserId },
   } = context
 
-  // Find Recipient
+  // Find All Recipients (for both 1:1 and group chats)
   const session = context.driver.session()
-  const messageRecipient = session.readTransaction(async (transaction) => {
-    const messageRecipientCypher = `
+  const messageRecipients = session.readTransaction(async (transaction) => {
+    const messageRecipientsCypher = `
       MATCH (senderUser:User { id: $currentUserId })-[:CHATS_IN]->(room:Room { id: $roomId })
-      MATCH (room)<-[:CHATS_IN]-(recipientUser:User)-[:PRIMARY_EMAIL]->(emailAddress:EmailAddress)
+      MATCH (room)<-[:CHATS_IN]-(recipientUser:User)
         WHERE NOT recipientUser.id = $currentUserId
         AND NOT (recipientUser)-[:BLOCKED]-(senderUser)
         AND NOT (recipientUser)-[:MUTED]->(senderUser)
-      RETURN senderUser {.*}, recipientUser {.*}, emailAddress {.email}
+      OPTIONAL MATCH (recipientUser)-[:PRIMARY_EMAIL]->(emailAddress:EmailAddress)
+      RETURN senderUser {.*}, recipientUser {.*}, emailAddress {.email} as email
     `
-    const txResponse = await transaction.run(messageRecipientCypher, {
+    const txResponse = await transaction.run(messageRecipientsCypher, {
       currentUserId,
       roomId,
     })
 
-    return {
-      senderUser: await txResponse.records.map((record) => record.get('senderUser'))[0],
-      recipientUser: await txResponse.records.map((record) => record.get('recipientUser'))[0],
-      email: await txResponse.records.map((record) => record.get('emailAddress'))[0]?.email,
-    }
+    return txResponse.records.map((record) => ({
+      senderUser: record.get('senderUser'),
+      recipientUser: record.get('recipientUser'),
+      email: record.get('email')?.email,
+    }))
   })
 
   try {
     // Execute Query
-    const { senderUser, recipientUser, email } = await messageRecipient
+    const recipients = await messageRecipients
+    const senderUser = recipients[0]?.senderUser
 
-    if (recipientUser) {
-      // send subscriptions
-      const roomCountUpdated = await getUnreadRoomsCount(recipientUser.id, session)
+    // Notify all recipients
+    for (const { recipientUser, email } of recipients) {
+      if (recipientUser) {
+        // send subscriptions
+        const roomCountUpdated = await getUnreadRoomsCount(recipientUser.id, session)
 
-      void context.pubsub.publish(ROOM_COUNT_UPDATED, {
-        roomCountUpdated,
-        userId: recipientUser.id,
-      })
-      void context.pubsub.publish(CHAT_MESSAGE_ADDED, {
-        chatMessageAdded: message,
-        userId: recipientUser.id,
-      })
+        void context.pubsub.publish(ROOM_COUNT_UPDATED, {
+          roomCountUpdated,
+          userId: recipientUser.id,
+        })
+        void context.pubsub.publish(CHAT_MESSAGE_ADDED, {
+          chatMessageAdded: message,
+          userId: recipientUser.id,
+        })
 
-      // Send EMail if we found a user(not blocked) and he is not considered online
-      if (recipientUser.emailNotificationsChatMessage !== false && !isUserOnline(recipientUser)) {
-        void sendChatMessageMail({ email, senderUser, recipientUser })
+        // Send EMail if we found a user(not blocked) and he is not considered online
+        if (recipientUser.emailNotificationsChatMessage !== false && !isUserOnline(recipientUser)) {
+          void sendChatMessageMail({ email, senderUser, recipientUser })
+        }
       }
     }
 

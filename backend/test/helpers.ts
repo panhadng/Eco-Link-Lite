@@ -60,6 +60,7 @@ export const TEST_CONFIG = {
 
   LANGUAGE_DEFAULT: 'en',
   LOG_LEVEL: 'DEBUG',
+  PUBLIC_MEDIA_URL: undefined,
 } as const satisfies typeof CONFIG
 
 interface OverwritableContextParams {
@@ -82,7 +83,7 @@ export const createApolloTestSetup = (opts?: CreateTestServerOptions) => {
       authenticatedUser,
       database,
       pubsub,
-      config: { ...TEST_CONFIG, ...config },
+      config: { ...TEST_CONFIG, ...config } as typeof CONFIG,
     })(req)
   }
 

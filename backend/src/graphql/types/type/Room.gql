@@ -19,12 +19,34 @@ type Room {
   users: [User]! @relation(name: "CHATS_IN", direction: "IN")
 
   roomId: String! @cypher(statement: "RETURN this.id")
-  roomName: String! @cypher(statement: "MATCH (this)<-[:CHATS_IN]-(user:User) WHERE NOT user.id = $cypherParams.currentUserId RETURN user.name")
+  isGroup: Boolean! @cypher(statement: """
+    MATCH (this)<-[:CHATS_IN]-(user:User)
+    WITH count(user) as userCount, this.isGroup as explicitGroup
+    RETURN COALESCE(explicitGroup, userCount > 2)
+  """)
+  groupName: String @cypher(statement: "RETURN this.groupName")
+  groupAvatar: String @cypher(statement: """
+    OPTIONAL MATCH (this)-[:GROUP_AVATAR]->(image:Image)
+    RETURN image.url
+  """)
+  roomName: String! @cypher(statement: """
+    MATCH (this)<-[:CHATS_IN]-(user:User)
+    WITH count(user) as userCount, this
+    WITH CASE 
+      WHEN userCount > 2 AND this.groupName IS NOT NULL THEN this.groupName
+      WHEN userCount > 2 THEN 'Group Chat'
+      ELSE [(this)<-[:CHATS_IN]-(u:User) WHERE NOT u.id = $cypherParams.currentUserId | u.name][0]
+    END AS name
+    RETURN name
+  """)
   avatar: String @cypher(statement: """
     MATCH (this)<-[:CHATS_IN]-(user:User)
-    WHERE NOT user.id = $cypherParams.currentUserId
-    OPTIONAL MATCH (user)-[:AVATAR_IMAGE]->(image:Image)
-    RETURN image.url
+    WITH count(user) as userCount, this
+    WITH CASE 
+      WHEN userCount > 2 THEN [(this)-[:GROUP_AVATAR]->(img:Image) | img.url][0]
+      ELSE [(this)<-[:CHATS_IN]-(u:User) WHERE NOT u.id = $cypherParams.currentUserId | [(u)-[:AVATAR_IMAGE]->(img:Image) | img.url]][0][0]
+    END AS avatarUrl
+    RETURN avatarUrl
   """)
 
   lastMessageAt: String
@@ -45,8 +67,28 @@ type Room {
 
 type Mutation {
   CreateRoom(
+    userId: ID
+    userIds: [ID!]
+    groupName: String
+  ): Room
+  AddUsersToRoom(
+    roomId: ID!
+    userIds: [ID!]!
+  ): Room
+  RemoveUserFromRoom(
+    roomId: ID!
     userId: ID!
   ): Room
+  UpdateRoomName(
+    roomId: ID!
+    groupName: String!
+  ): Room
+  LeaveRoom(
+    roomId: ID!
+  ): Boolean
+  DeleteRoom(
+    roomId: ID!
+  ): Boolean
 }
 
 type Query {

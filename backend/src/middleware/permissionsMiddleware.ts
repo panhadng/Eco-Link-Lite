@@ -494,6 +494,17 @@ export default shield(
       // InviteCode
       generatePersonalInviteCode: isAuthenticated,
       generateGroupInviteCode: isAllowedToGenerateGroupInviteCode,
+
+      // Room mutations
+      CreateRoom: isAuthenticated,
+      AddUsersToRoom: isAuthenticated,
+      RemoveUserFromRoom: isAuthenticated,
+      UpdateRoomName: isAuthenticated,
+      LeaveRoom: isAuthenticated,
+      DeleteRoom: isAuthenticated,
+      CreateMessage: isAuthenticated,
+      MarkMessagesAsSeen: isAuthenticated,
+      
       invalidateInviteCode: isAuthenticated,
       redeemInviteCode: isAuthenticated,
 
@@ -501,9 +512,6 @@ export default shield(
       markTeaserAsViewed: allow,
       saveCategorySettings: isAuthenticated,
       updateOnlineStatus: isAuthenticated,
-      CreateRoom: isAuthenticated,
-      CreateMessage: isAuthenticated,
-      MarkMessagesAsSeen: isAuthenticated,
       toggleObservePost: isAuthenticated,
       muteGroup: and(isAuthenticated, isMemberOfGroup),
       unmuteGroup: and(isAuthenticated, isMemberOfGroup),

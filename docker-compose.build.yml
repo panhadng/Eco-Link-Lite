@@ -1,19 +1,19 @@
 services:
 
   webapp:
-    image: ghcr.io/ocelot-social-community/ocelot-social/webapp-build:${OCELOT_VERSION:-latest}
+    image: ghcr.io/ecolink-webapp-build:${OCELOT_VERSION:-latest}
     build:
       target: build
       context: .
 
   backend:
-    image: ghcr.io/ocelot-social-community/ocelot-social/backend-build:${OCELOT_VERSION:-latest}
+    image: ghcr.io/ecolink-backend-build:${OCELOT_VERSION:-latest}
     build:
       target: build
       context: backend
 
   maintenance:
-    image: ghcr.io/ocelot-social-community/ocelot-social/maintenance-build:${OCELOT_VERSION:-latest}
+    image: ghcr.io/ecolink-maintenance-build:${OCELOT_VERSION:-latest}
     build:
       target: build
       context: .

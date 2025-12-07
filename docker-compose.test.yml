@@ -2,7 +2,7 @@ services:
 
   webapp:
     # name the image so that it cannot be found in a DockerHub repository, otherwise it will not be built locally from the 'dockerfile' but pulled from there
-    image: ghcr.io/ocelot-social-community/ocelot-social/webapp:test
+    image: ghcr.io/ecolink-webapp:test
     build:
       target: test
     environment:
@@ -12,7 +12,7 @@ services:
 
   backend:
     # name the image so that it cannot be found in a DockerHub repository, otherwise it will not be built locally from the 'dockerfile' but pulled from there
-    image: ghcr.io/ocelot-social-community/ocelot-social/backend:test
+    image: ghcr.io/ecolink-backend:test
     depends_on:
       - minio
       - minio-mc
@@ -25,7 +25,7 @@ services:
       - AWS_SECRET_ACCESS_KEY=12341234
       - AWS_ENDPOINT=http:/minio:9000
       - AWS_REGION=local
-      - AWS_BUCKET=ocelot
+      - AWS_BUCKET=ecolink
       - DEBUG=
       - IMAGOR_PUBLIC_URL=http://localhost:8000
       - IMAGOR_SECRET=mysecret
@@ -35,11 +35,11 @@ services:
 
   maintenance:
     # name the image so that it cannot be found in a DockerHub repository, otherwise it will not be built locally from the 'dockerfile' but pulled from there
-    image: ghcr.io/ocelot-social-community/ocelot-social/maintenance:test
+    image: ghcr.io/ecolink-maintenance:test
 
   neo4j:
     # name the image so that it cannot be found in a DockerHub repository, otherwise it will not be built locally from the 'dockerfile' but pulled from there
-    image: ghcr.io/ocelot-social-community/ocelot-social/neo4j:community
+    image: ghcr.io/ecolink-neo4j:community
     build:
       context: ./neo4j
       target: community
@@ -81,8 +81,8 @@ services:
       /bin/sh -c "
       sleep 5;
       /usr/bin/mc alias set dockerminio http://minio:9000 minio 12341234;
-      /usr/bin/mc mb --ignore-existing dockerminio/ocelot;
-      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ocelot;
+      /usr/bin/mc mb --ignore-existing dockerminio/ecolink;
+      /usr/bin/mc anonymous set-json /tmp/readonly-policy.json dockerminio/ecolink;
       "
 
 volumes:
