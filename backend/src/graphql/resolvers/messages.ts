@@ -56,7 +56,23 @@ export default {
       const resolved = await neo4jgraphql(object, params, context, resolveInfo)
 
       if (resolved) {
-        const undistributedMessagesIds = resolved
+        // Deduplicate messages by ID (backend safety check)
+        const seenIds = new Set<string>()
+        const uniqueMessages = resolved.filter((msg: any) => {
+          if (!msg?.id) return true
+          if (seenIds.has(msg.id)) {
+            console.warn(`[BACKEND] Message query: Filtering duplicate message ID: ${msg.id}`)
+            return false
+          }
+          seenIds.add(msg.id)
+          return true
+        })
+
+        if (uniqueMessages.length !== resolved.length) {
+          console.warn(`[BACKEND] Message query: Found ${resolved.length - uniqueMessages.length} duplicate messages. Filtered to ${uniqueMessages.length}`)
+        }
+
+        const undistributedMessagesIds = uniqueMessages
           .filter((msg) => !msg.distributed && msg.senderId !== context.user.id)
           .map((msg) => msg.id)
         const session = context.driver.session()
@@ -68,8 +84,11 @@ export default {
           session.close()
         }
         // send subscription to author to updated the messages
+        
+        console.log(`[BACKEND] Message query: Returning ${uniqueMessages.length} unique messages for room ${params.roomId}`)
+        return uniqueMessages.reverse()
       }
-      return resolved.reverse()
+      return resolved?.reverse() || []
     },
   },
   Mutation: {
@@ -87,9 +106,8 @@ export default {
           MATCH (currentUser:User { id: $currentUserId })-[:CHATS_IN]->(room:Room { id: $roomId })
           OPTIONAL MATCH (currentUser)-[:AVATAR_IMAGE]->(image:Image)
           OPTIONAL MATCH (m:Message)-[:INSIDE]->(room)
-          OPTIONAL MATCH (room)<-[:CHATS_IN]-(recipientUser:User)
-            WHERE NOT recipientUser.id = $currentUserId
-          WITH MAX(m.indexId) as maxIndex, room, currentUser, image, recipientUser
+          WITH MAX(m.indexId) as maxIndex, room, currentUser, image
+          // Create message only once (not per recipient)
           CREATE (currentUser)-[:CREATED]->(message:Message {
             createdAt: toString(datetime()),
             id: apoc.create.uuid(),
@@ -100,6 +118,11 @@ export default {
             seen: false
           })-[:INSIDE]->(room)
           SET room.lastMessageAt = toString(datetime())
+          // Get one recipient for the response (for backwards compatibility with 1:1 chats)
+          WITH message, room, currentUser, image
+          OPTIONAL MATCH (room)<-[:CHATS_IN]-(recipientUser:User)
+            WHERE NOT recipientUser.id = $currentUserId
+          WITH message, room, currentUser, image, collect(recipientUser)[0] as recipientUser
           RETURN message {
             .*,
             indexId: toString(message.indexId),
@@ -124,6 +147,8 @@ export default {
           if (!message) {
             return null
           }
+
+          console.log(`[BACKEND] CreateMessage: Created message ${message.id} with indexId ${message.indexId} in room ${roomId}`)
 
           const atns: File[] = []
 
