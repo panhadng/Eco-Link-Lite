@@ -152,6 +152,7 @@ export default {
               roomName: roomName,
               avatar: computedAvatar,
               groupAvatar: null,
+              groupName: null,
               isGroup: false,
               unreadCount: toString(COUNT(DISTINCT message))
             }
