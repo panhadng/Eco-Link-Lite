@@ -142,12 +142,17 @@ export default {
             WITH room, currentUser, otherUser
             OPTIONAL MATCH (room)<-[:INSIDE]-(message:Message)<-[:CREATED]-(sender:User)
             WHERE NOT sender.id = $currentUserId AND NOT message.seen
-            WITH room, currentUser, otherUser, message,
-            otherUser.name AS roomName
+            OPTIONAL MATCH (otherUser)-[:AVATAR_IMAGE]->(avatarImg:Image)
+            WITH room, currentUser, otherUser, message, avatarImg,
+            otherUser.name AS roomName,
+            avatarImg.url AS computedAvatar
             RETURN room {
               .*,
               users: [properties(currentUser), properties(otherUser)],
               roomName: roomName,
+              avatar: computedAvatar,
+              groupAvatar: null,
+              isGroup: false,
               unreadCount: toString(COUNT(DISTINCT message))
             }
           `
