@@ -86,8 +86,9 @@ export function cleanHtml(dirty, _key, sanitizeHtmlOptions = standardSanitizeHtm
     .replace(/(\r\n|\n\r|\r|\n)/g, '<br>$1')
 
     // replace all p tags with line breaks (and spaces) only by single linebreaks
-    // limit linebreaks to max 2 (equivalent to html "br" linebreak)
-    .replace(/(<br ?\/?>\s*){2,}/gim, '<br>')
+    // limit linebreaks to max 2 (allow 2 line breaks for paragraph spacing, but prevent abuse)
+    // Collapse 3+ consecutive <br> tags to 2, but preserve 1-2 <br> tags
+    .replace(/(<br ?\/?>\s*){3,}/gim, '<br><br>')
     // remove additional linebreaks after p tags
     .replace(/<\/(p|div|th|tr)>\s*(<br ?\/?>\s*)+\s*<(p|div|th|tr)>/gim, '</p><p>')
     // remove additional linebreaks inside p tags

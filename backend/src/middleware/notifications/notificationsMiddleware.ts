@@ -31,7 +31,10 @@ const publishNotifications = async (
       !isUserOnline(notificationAdded.to) &&
       !emailsSent.includes(notificationAdded.email)
     ) {
-      void sendNotificationMail(notificationAdded)
+      // Wrap in catch to prevent email errors from crashing the server
+      sendNotificationMail(notificationAdded).catch((error) => {
+        console.error(`Failed to send notification email to ${notificationAdded.email}:`, error.message || error)
+      })
       emailsSent.push(notificationAdded.email)
     }
   })
@@ -491,7 +494,10 @@ const handleCreateMessage = async (resolve, root, args, context, resolveInfo) =>
 
         // Send EMail if we found a user(not blocked) and he is not considered online
         if (recipientUser.emailNotificationsChatMessage !== false && !isUserOnline(recipientUser)) {
-          void sendChatMessageMail({ email, senderUser, recipientUser })
+          // Wrap in catch to prevent email errors from crashing the server
+          sendChatMessageMail({ email, senderUser, recipientUser }).catch((error) => {
+            console.error(`Failed to send chat message email to ${email}:`, error.message || error)
+          })
         }
       }
     }

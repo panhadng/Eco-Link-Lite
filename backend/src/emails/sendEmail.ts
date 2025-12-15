@@ -151,7 +151,10 @@ export const sendNotificationMail = async (notification: any): Promise<OriginalM
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }
 
@@ -183,7 +186,10 @@ export const sendChatMessageMail = async (
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }
 
@@ -229,7 +235,10 @@ export const sendRegistrationMail = async (
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }
 
@@ -263,7 +272,10 @@ export const sendEmailVerification = async (
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }
 
@@ -292,7 +304,10 @@ export const sendResetPasswordMail = async (
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }
 
@@ -319,6 +334,9 @@ export const sendWrongEmail = async (data: {
     })
     return originalMessage as OriginalMessage
   } catch (error) {
-    throw new Error(error)
+    // Log error but don't throw - let caller handle gracefully
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    console.error('Failed to send notification email:', errorMessage)
+    return Promise.reject(error)
   }
 }

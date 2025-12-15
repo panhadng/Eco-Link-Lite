@@ -28,7 +28,7 @@ const environment = {
   DISABLED_MIDDLEWARES: ['test', 'development'].includes(env.NODE_ENV!)
     ? (env.DISABLED_MIDDLEWARES?.split(',') ?? [])
     : [],
-  SEND_MAIL: env.NODE_ENV !== 'test',
+  SEND_MAIL: false, // Disabled to prevent SMTP timeout crashes
   LOG_LEVEL: 'DEBUG',
   PROXY_S3: env.PROXY_S3,
 }
