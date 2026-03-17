@@ -66,7 +66,18 @@ const createServer = (options?: ApolloServerExpressConfig) => {
     app, 
     path: '/',
     cors: {
-      origin: [CONFIG.CLIENT_URI, 'http://localhost:3000', 'http://localhost:3001', 'http://13.203.0.20', 'http://13.203.0.20:3000', 'http://13.203.0.20:3001' ,'https://eco-link.flyonit.com.au'],
+      origin: [
+        CONFIG.CLIENT_URI,
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:8080', // Eco-Link-CC (Vite) local dev
+        'http://13.203.0.20',
+        'http://13.203.0.20:3000',
+        'http://13.203.0.20:3001',
+        'http://3.7.109.46:3001',
+        'https://eco-link.flyonit.com.au',
+        'https://ecolink.flyonit.com.au',
+      ],
       credentials: true,
     },
   })
